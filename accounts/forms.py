@@ -36,3 +36,9 @@ class RegistrationForm(forms.Form):
         validate_password(password)
 
         return password
+
+class LoginForm(forms.Form):
+    username = forms.CharField()
+    password = forms.CharField(
+        widget=forms.PasswordInput
+    )
