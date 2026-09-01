@@ -6,6 +6,7 @@ from .forms import RegistrationForm, LoginForm
 # Create your views here.
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.contrib.auth.decorators import login_required
 
 
 
@@ -23,7 +24,7 @@ def register(request):
             return redirect('login')
 
         else:
-            form = RegisterForm()
+            form = RegistrationForm()
 
         return render(request, 'accounts/register.html', {'form': form})
 
@@ -40,6 +41,10 @@ def login_view(request):
 
             login(request, user)
 
+            next_url = request.GET.get("next")
+            if next_url:
+                return redirect(next_url)
+
             return redirect("home")
 
     else:
@@ -50,11 +55,12 @@ def login_view(request):
         "accounts/login.html",
         {"form": form}
     )
-
+@login_required
 def home(request):
     print(request.user.is_authenticated)
     return render(request, "accounts/home.html",
                   )
+
 
 def logout_view(request):
     logout(request)
