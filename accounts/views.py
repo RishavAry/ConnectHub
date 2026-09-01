@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import User
 from .forms import RegistrationForm
 # from django.http import HttpResponse
@@ -12,7 +12,13 @@ def register(request):
         form = RegistrationForm(request.POST)
 
         if form.is_valid():
-            print(form.cleaned_data)
+            data = form.cleaned_data
+            User.objects.create_user(
+                username=data['username'],
+                email=data['email'],
+                password=data['password'],
+            )
+            return redirect('login')
 
         else:
             form = RegisterForm()
