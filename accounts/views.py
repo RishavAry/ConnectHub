@@ -1,4 +1,4 @@
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.shortcuts import render, redirect
 from .models import User
 from .forms import RegistrationForm, LoginForm
@@ -6,6 +6,7 @@ from .forms import RegistrationForm, LoginForm
 # Create your views here.
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+
 
 
 def register(request):
@@ -51,5 +52,10 @@ def login_view(request):
     )
 
 def home(request):
-    return render(request, "accounts/home.html")
+    print(request.user.is_authenticated)
+    return render(request, "accounts/home.html",
+                  )
 
+def logout_view(request):
+    logout(request)
+    return redirect("login")
