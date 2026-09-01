@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-
+from django.contrib.auth import authenticate
 from .models import User
 
 
@@ -42,3 +42,17 @@ class LoginForm(forms.Form):
     password = forms.CharField(
         widget=forms.PasswordInput
     )
+    def clean (self):
+        cleaned_data = super().clean()
+
+        username = cleaned_data.get("username")
+        password = cleaned_data.get("password")
+
+        if username and password:
+            user = authenticate(username=username, password=password)
+
+            if user is None:
+                raise ValidationError("Invalid username or password")
+            cleaned_data["user"] = user
+
+            return cleaned_data
