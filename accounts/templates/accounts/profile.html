@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Profile</title>
+</head>
+<body>
+
+    <h1>My Profile</h1>
+
+    <p>Username: {{ request.user.username }}</p>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">Save Profile</button>
+    </form>
+
+    <a href="{% url 'home' %}">Home</a>
+
+</body>
+</html>

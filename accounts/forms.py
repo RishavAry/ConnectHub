@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
-from .models import User
+from .models import User, Profile
 
 
 class RegistrationForm(forms.Form):
@@ -56,3 +56,7 @@ class LoginForm(forms.Form):
             cleaned_data["user"] = user
 
             return cleaned_data
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['bio', 'location']
