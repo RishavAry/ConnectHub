@@ -7,4 +7,8 @@ path("login/", views.login_view, name="login"),
     path("", views.home, name="home"),
     path("logout/", views.logout_view, name="logout"),
     path("profile/", views.profile, name="profile"),
+
+    path("follow/<int:user_id>/", views.follow_user, name="follow"),
+    path("users/", views.users_list, name="users"),
+    path("unfollow/<int:user_id>/", views.unfollow_user, name="unfollow"),
 ]

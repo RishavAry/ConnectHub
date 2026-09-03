@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ConnectHub Users</title>
+</head>
+<body>
+
+    <h1>ConnectHub Users</h1>
+
+    {% for item in users %}
+        <h3>{{ item.user.username }}</h3>
+
+        {% if item.is_following %}
+            <a href="{% url 'unfollow' item.user.id %}">Unfollow</a>
+        {% else %}
+            <a href="{% url 'follow' item.user.id %}">Follow</a>
+        {% endif %}
+    {% endfor %}
+
+    <br>
+
+    <a href="{% url 'home' %}">Home</a>
+
+</body>
+</html>

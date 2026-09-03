@@ -1,6 +1,6 @@
 from django.contrib.auth import login, logout
 from django.shortcuts import render, redirect
-from .models import User
+from .models import User, Follow
 from .forms import RegistrationForm, LoginForm
 # from django.http import HttpResponse
 # Create your views here.
@@ -79,3 +79,52 @@ def profile(request):
         form = ProfileForm(instance=profile)
 
     return render(request, "accounts/profile.html", {"form": form})
+
+@login_required
+def follow_user(request, user_id):
+    user = User.objects.get(id=user_id)
+
+    if request.user == user:
+        return redirect("users")
+
+    Follow.objects.get_or_create(
+        follower=request.user,
+        following=user
+    )
+
+    return redirect("users")
+
+@login_required
+def users_list(request):
+    users = User.objects.exclude(id=request.user.id)
+    user_data = []
+
+    for user in users:
+        is_following = Follow.objects.filter(
+            follower=request.user,
+            following=user
+        ).exists()
+
+        user_data.append({
+            "user": user,
+            "is_following": is_following
+        })
+
+    return render(
+        request,
+        "accounts/users.html",
+        {"users": user_data}
+    )
+
+@login_required
+def unfollow_user(request, user_id):
+    user = User.objects.get(id=user_id)
+
+    Follow.objects.filter(
+        follower=request.user,
+        following=user
+    ).delete()
+
+    return redirect("users")
+
+
