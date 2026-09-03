@@ -11,4 +11,5 @@ path("login/", views.login_view, name="login"),
     path("follow/<int:user_id>/", views.follow_user, name="follow"),
     path("users/", views.users_list, name="users"),
     path("unfollow/<int:user_id>/", views.unfollow_user, name="unfollow"),
+    path("create_post/", views.create_post, name="create_post"),
 ]
