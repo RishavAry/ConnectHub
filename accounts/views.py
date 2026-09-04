@@ -1,6 +1,6 @@
 from django.contrib.auth import login, logout
 from django.shortcuts import render, redirect
-from .models import User, Follow
+from .models import User, Follow, Post, Like
 from .forms import RegistrationForm, LoginForm
 # from django.http import HttpResponse
 # Create your views here.
@@ -8,7 +8,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 
-from .forms import RegistrationForm, LoginForm, ProfileForm, PostForm
+from .forms import RegistrationForm, LoginForm, ProfileForm, PostForm, CommentForm
+from django.db.models import Q
 
 def register(request):
     if request.method == "POST":
@@ -55,11 +56,38 @@ def login_view(request):
         "accounts/login.html",
         {"form": form}
     )
+
 @login_required
 def home(request):
-    print(request.user.is_authenticated)
-    return render(request, "accounts/home.html",
-                  )
+    following_users = request.user.following.values_list(
+        "following",
+        flat=True
+    )
+
+    posts = Post.objects.filter(
+        Q(author=request.user) |
+        Q(author_id__in=following_users)
+    ).order_by("-created_at")
+
+    post_data = []
+    for post in posts:
+        likes_count = post.likes.count()
+        is_liked = Like.objects.filter(
+            user=request.user,
+            post=post
+        ).exists()
+        post_data.append({
+            "post": post,
+            "likes_count": likes_count,
+            "is_liked": is_liked,
+            "comment_form": CommentForm(),
+        })
+
+    return render(
+        request,
+        "accounts/home.html",
+        {"posts": post_data}
+    )
 
 
 def logout_view(request):
@@ -146,3 +174,31 @@ def create_post(request):
         "accounts/create_post.html",
         {"form": form}
     )
+
+@login_required
+def like_post(request, post_id):
+    post = Post.objects.get(id=post_id)
+    like = Like.objects.filter(
+        user=request.user,
+        post=post
+    ).first()
+    if like:
+        like.delete()
+    else:
+        Like.objects.create(
+            user=request.user,
+            post=post
+        )
+    return redirect("home")
+
+@login_required
+def comment_post(request, post_id):
+    post = Post.objects.get(id=post_id)
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.user = request.user
+            comment.save()
+    return redirect("home")
