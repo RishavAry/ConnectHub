@@ -89,3 +89,39 @@ class Comment(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+class Notification(models.Model):
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sent_notifications"
+    )
+    recipient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="received_notifications"
+    )
+    NOTIFICATION_TYPE = [
+        ("follow", "Follow"),
+        ("like", "Like"),
+        ("comment", "Comment"),
+    ]
+    notification_type = models.CharField(
+        max_length=20,
+        choices=NOTIFICATION_TYPE,
+    )
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications"
+    )
+    comment = models.ForeignKey(
+        Comment,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)

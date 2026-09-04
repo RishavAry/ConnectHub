@@ -29,7 +29,12 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-
+            <a href="{% url 'notifications' %}">
+                🔔 Notifications
+                {% if unread_count > 0 %}
+                    <span>{{ unread_count }}</span>
+                {% endif %}
+            </a>
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-dark navbar-nav ms-auto align-items-center">

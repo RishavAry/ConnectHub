@@ -8,7 +8,7 @@
     <h1>My Profile</h1>
 
     <p>Username: {{ request.user.username }}</p>
-
+    <p>Unread notifications: {{ unread_count }}</p>
     <form method="POST">
         {% csrf_token %}
 
@@ -16,6 +16,9 @@
 
         <button type="submit">Save Profile</button>
     </form>
+    <p>Posts: {{ posts_count }}</p>
+    <p>Followers: {{ followers_count }}</p>
+    <p>Following: {{ following_count }}</p>
 
     <a href="{% url 'home' %}">Home</a>
 

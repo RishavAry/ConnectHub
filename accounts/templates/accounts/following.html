@@ -1,0 +1,9 @@
+<h1>Following</h1>
+
+{% for user in users %}
+    <div>
+        <h3>{{ user.username }}</h3>
+    </div>
+{% empty %}
+    <p>You are not following anyone yet.</p>
+{% endfor %}

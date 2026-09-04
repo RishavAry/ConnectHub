@@ -1,0 +1,30 @@
+```html
+<h1>Notifications</h1>
+
+{% for notification in notifications %}
+
+    <a href="{% url 'mark_notification_read' notification.id %}">
+
+        {% if not notification.is_read %}
+            🔵
+        {% endif %}
+
+        {% if notification.notification_type == "follow" %}
+            <strong>{{ notification.sender.username }}</strong>
+            followed you.
+
+        {% elif notification.notification_type == "like" %}
+            <strong>{{ notification.sender.username }}</strong>
+            liked your post.
+
+        {% elif notification.notification_type == "comment" %}
+            <strong>{{ notification.sender.username }}</strong>
+            commented on your post.
+        {% endif %}
+
+    </a>
+
+{% empty %}
+    <p>No notifications yet.</p>
+{% endfor %}
+```
