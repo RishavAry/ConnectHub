@@ -1,0 +1,65 @@
+<h1>{{ user.username }}'s Profile</h1>
+
+<p>Posts: {{ posts.count }}</p>
+
+<p>Followers: {{ followers_count }}</p>
+
+<p>Following: {{ following_count }}</p>
+
+<hr>
+{% if user != request.user %}
+
+    {% if is_following %}
+        <a href="{% url 'unfollow' user.id %}">
+            Unfollow
+        </a>
+    {% else %}
+        <a href="{% url 'follow' user.id %}">
+            Follow
+        </a>
+    {% endif %}
+
+{% endif %}
+
+<h2>Posts</h2>
+
+{% for post in posts %}
+    <div>
+        <h3>{{ post.content }}</h3>
+        <small>{{ post.created_at }}</small>
+    <br>
+
+        {% if post.is_liked %}
+            <a href="{% url 'like' post.id %}">
+            💔 Unlike
+            </a>
+        {% else %}
+            <a href="{% url 'like' post.id %}">
+            ❤️ Like
+            </a>
+        {% endif %}
+    <span>
+        {{ post.likes.count }} likes
+    </span>
+    </div>
+    <h4>Comments</h4>
+
+    {% for comment in post.comments.all %}
+        <p>
+             <strong>{{ comment.user.username }}</strong>:
+                {{ comment.content }}
+        </p>
+        {% empty %}
+            <p>No comments yet.</p>
+    {% endfor %}
+    <form method="POST" action="{% url 'comment' post.id %}">
+    {% csrf_token %}
+
+    <input type="text" name="content" placeholder="write a comment..."
+           required>
+    <button type="submit"> Comment </button>
+    </form>
+
+{% empty %}
+    <p>No posts yet.</p>
+{% endfor %}

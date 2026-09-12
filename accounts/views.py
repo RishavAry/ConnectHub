@@ -135,7 +135,7 @@ def follow_user(request, user_id):
             notification_type="follow",
         )
 
-    return redirect("users")
+    return redirect("user_profile", user_id=user_id)
 
 @login_required
 def users_list(request):
@@ -168,7 +168,7 @@ def unfollow_user(request, user_id):
         following=user
     ).delete()
 
-    return redirect("users")
+    return redirect("user_profile", user_id=user_id)
 
 @login_required
 def create_post(request):
@@ -211,7 +211,7 @@ def like_post(request, post_id):
             notification_type="like",
             post=post,
         )
-    return redirect("home")
+    return redirect("user_profile", user_id=post.author.id)
 
 @login_required
 def comment_post(request, post_id):
@@ -278,3 +278,44 @@ def mark_notification_read(request, notification_id):
     notification.is_read = True
     notification.save()
     return redirect("notifications")
+
+@login_required
+def user_profile(request, user_id):
+    user = User.objects.get(id=user_id)
+
+    posts = user.posts.all()
+    for post in posts:
+        post.is_liked = post.likes.filter(
+            user=request.user
+
+        ).exists()
+
+    followers_count = user.followers.count()
+    following_count = user.following.count()
+    is_following = Follow.objects.filter(
+        follower=request.user,
+        following=user
+    ).exists()
+    return render(
+        request,
+        "accounts/user_profile.html",
+        {
+            "user": user,
+            "posts": posts,
+            "followers_count": followers_count,
+            "following_count": following_count,
+            "is_following": is_following
+        }
+    )
+
+@login_required
+def unfollow_user(request, user_id):
+    user = User.objects.get(id=user_id)
+    follow = Follow.objects.filter(
+        follower=request.user,
+        following=user
+    ).first()
+    if follow:
+        follow.delete()
+    return redirect("user_profile", user_id=user_id)
+

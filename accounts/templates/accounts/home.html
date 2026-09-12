@@ -83,6 +83,7 @@
         <small>{{ item.post.created_at }}</small>
         <p>Likes: {{ item.likes_count }}</p>
 
+
         <a href="{% url 'like' item.post.id %}">
             {% if item.is_liked %}
                 Unlike
