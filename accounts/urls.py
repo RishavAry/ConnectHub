@@ -32,4 +32,9 @@ path("login/", views.login_view, name="login"),
         views.user_profile,
         name="user_profile"
 ),
+    path(
+        "search/",
+        views.search_users,
+        name="search_users"
+    )
 ]

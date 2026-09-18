@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search</title>
+</head>
+<body>
+<form method="GET" action="{% url 'search_users' %}">
+    <input
+        type="search"
+        name="q"
+        placeholder="Search users..."
+    >
+
+    <button type="submit">
+        Search
+    </button>
+</form>
+{% for user in users %}
+
+    <a href="{% url 'user_profile' user.id %}">
+        {{ user.username }}
+    </a>
+
+{% empty %}
+
+    <p>type the name to search</p>
+
+{% endfor %}
+
+</body>
+</html>

@@ -319,3 +319,28 @@ def unfollow_user(request, user_id):
         follow.delete()
     return redirect("user_profile", user_id=user_id)
 
+
+def search_users(request):
+    query = request.GET.get("q")
+
+    if query:
+        users = User.objects.filter(
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
+        ).exclude(id=request.user.id)
+    else:
+        users = User.objects.none()
+
+    return render(
+        request,
+        "accounts/search.html",
+        {"users": users}
+    )
+
+
+
+
+
+
