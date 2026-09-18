@@ -74,44 +74,100 @@
         {% endblock %}
     </main>
    {% for item in posts %}
-    <div>
-        <h3>{{ item.post.author.username }}</h3>
-        {% if post.image %}
-            <img src="{{ item.post.image.url }} " alt="Post image" class = "post-image">
+
+```
+<div class="post">
+
+    <!-- Post author -->
+    <h3>
+        {{ item.post.author.username }}
+    </h3>
+
+    <!-- Post detail link -->
+    <a href="{% url 'post_detail' item.post.id %}">
+        {{ item.post.content }}
+    </a>
+
+    <!-- Post image -->
+    {% if item.post.image %}
+        <img
+            src="{{ item.post.image.url }}"
+            alt="Post image"
+            class="post-image"
+        >
+    {% endif %}
+
+    <!-- Post date -->
+    <small>
+        {{ item.post.created_at }}
+    </small>
+
+    <!-- Like count -->
+    <p>
+        Likes: {{ item.likes_count }}
+    </p>
+
+    <!-- Like / Unlike -->
+    <a href="{% url 'like' item.post.id %}">
+        {% if item.is_liked %}
+            💔 Unlike
+        {% else %}
+            ❤️ Like
         {% endif %}
-        <p>{{ item.post.content }}</p>
-        <small>{{ item.post.created_at }}</small>
-        <p>Likes: {{ item.likes_count }}</p>
+    </a>
 
+    <!-- Comments -->
+    <h4>Comments</h4>
 
-        <a href="{% url 'like' item.post.id %}">
-            {% if item.is_liked %}
-                Unlike
-            {% else %}
-                Like
-        {% endif %}
-        </a>
-
-        <h4>Comments</h4>
-        {% for comment in item.post.comments.all %}
-            <div>
-            <strong>{{ comment.user.username }}</strong>
-            <p>{{ comment.content }}</p>
-            </div>
-            {% empty %}
-                <p>No comments yet.</p>
-            {% endfor %}
+    {% for comment in item.post.comments.all %}
 
         <div class="comment">
-            <form method="POST" action="{% url 'comment' item.post.id %}">
-                {% csrf_token %}
-                {{ item.comment_form.as_p }}
-                <button type="submit">Comment</button>
-            </form>
+            <strong>
+                {{ comment.user.username }}
+            </strong>
+
+            <p>
+                {{ comment.content }}
+            </p>
         </div>
 
-    </div>
+    {% empty %}
+
+        <p>No comments yet.</p>
+
     {% endfor %}
+
+    <!-- Add comment -->
+    <div class="comment">
+
+        <form
+            method="POST"
+            action="{% url 'comment' item.post.id %}"
+        >
+
+            {% csrf_token %}
+
+            {{ item.comment_form.as_p }}
+
+            <button type="submit">
+                Comment
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+```
+
+{% empty %}
+
+```
+<p>No posts to show.</p>
+```
+
+{% endfor %}
+
 
     <footer class="bg-white border-top py-3 mt-auto">
         <div class="container text-center text-muted small">

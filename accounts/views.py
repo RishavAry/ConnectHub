@@ -231,7 +231,7 @@ def comment_post(request, post_id):
                 comment=comment
 
             )
-    return redirect("home")
+    return redirect("post_detail", post_id=post_id)
 
 
 @login_required
@@ -339,7 +339,18 @@ def search_users(request):
         {"users": users}
     )
 
+def post_detail(request, post_id):
+    post = Post.objects.get(id=post_id)
+    is_liked = post.likes.filter(
+        user=request.user
+    ).exists()
+    comment_form = CommentForm()
 
+    return render(
+        request,
+        "accounts/post_detail.html",
+        {"post": post, "is_liked": is_liked, "comment_form": comment_form}
+    )
 
 
 

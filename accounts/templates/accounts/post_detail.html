@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>{{ post.author.username }}</h1>
+
+<p>{{ post.content }}</p>
+
+<p>{{ post.created_at }}</p>
+<p>
+    Likes: {{ post.likes.count }}
+</p>
+
+<a href="{% url 'like' post.id %}">
+    {% if is_liked %}
+        💔 Unlike
+    {% else %}
+        ❤️ Like
+    {% endif %}
+</a>
+<small>{{ post.likes.count }}</small>
+<div class="comment">
+        <form
+            method="POST"
+            action="{% url 'comment' post.id %}">
+            {% csrf_token %}
+
+            {{ comment_form.as_p }}
+
+            <button type="submit">
+                Comment
+            </button>
+
+        </form>
+
+    </div>
+<h3>Comments</h3>
+{% for comment in post.comments.all %}
+    <div>
+        <strong>{{ comment.user.username }}</strong>
+        <p>{{ comment.content }}</p>
+    </div>
+    {% empty %}
+        <p>No comments yet.</p>
+{% endfor %}
+</body>
+</html>

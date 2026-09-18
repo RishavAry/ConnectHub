@@ -36,5 +36,10 @@ path("login/", views.login_view, name="login"),
         "search/",
         views.search_users,
         name="search_users"
+    ),
+    path(
+        "post/<int:post_id>/",
+        views.post_detail,
+        name="post_detail"
     )
 ]
