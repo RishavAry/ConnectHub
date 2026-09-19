@@ -9,8 +9,9 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 
 from .forms import RegistrationForm, LoginForm, ProfileForm, PostForm, CommentForm
-from django.db.models import Q
-
+from django.db.models import Q, Count, Exists, OuterRef
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.shortcuts import get_object_or_404
 def register(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
@@ -24,10 +25,10 @@ def register(request):
             )
             return redirect('login')
 
-        else:
-            form = RegistrationForm()
+    else:
+        form = RegistrationForm()
 
-        return render(request, 'accounts/register.html', {'form': form})
+    return render(request, 'accounts/register.html', {'form': form})
 
 
     return render(request, 'accounts/register.html')
@@ -43,7 +44,11 @@ def login_view(request):
             login(request, user)
 
             next_url = request.GET.get("next")
-            if next_url:
+
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts={request.get_host()}
+            ):
                 return redirect(next_url)
 
             return redirect("home")
@@ -56,7 +61,6 @@ def login_view(request):
         "accounts/login.html",
         {"form": form}
     )
-
 @login_required
 def home(request):
     following_users = request.user.following.values_list(
@@ -64,23 +68,26 @@ def home(request):
         flat=True
     )
 
-
-    posts = Post.objects.filter(
+    liked_by_user = Like.objects.filter(
+        user=request.user,
+        post= OuterRef("pk")
+    )
+    posts = (Post.objects.filter(
         Q(author=request.user) |
         Q(author_id__in=following_users)
-    ).order_by("-created_at")
+    ).select_related("author").annotate(likes_count=Count("likes"),
+                                            is_liked=Exists(liked_by_user)).prefetch_related("comments")
+             .order_by("-created_at")
+             )
 
     post_data = []
     for post in posts:
-        likes_count = post.likes.count()
-        is_liked = Like.objects.filter(
-            user=request.user,
-            post=post
-        ).exists()
+        likes_count = post.likes_count
+
         post_data.append({
             "post": post,
             "likes_count": likes_count,
-            "is_liked": is_liked,
+            "is_liked": post.is_liked,
             "comment_form": CommentForm(),
         })
 
@@ -118,7 +125,7 @@ def profile(request):
 
 @login_required
 def follow_user(request, user_id):
-    user = User.objects.get(id=user_id)
+    user = get_object_or_404(User, id=user_id)
 
     if request.user == user:
         return redirect("users")
@@ -139,14 +146,19 @@ def follow_user(request, user_id):
 
 @login_required
 def users_list(request):
-    users = User.objects.exclude(id=request.user.id)
+    followed_by_user = Follow.objects.filter(
+
+        follower=request.user,
+        following=OuterRef("pk")
+    )
+    users = User.objects.exclude(id=request.user.id).annotate(
+        is_following=Exists(followed_by_user)
+    )
+
     user_data = []
 
     for user in users:
-        is_following = Follow.objects.filter(
-            follower=request.user,
-            following=user
-        ).exists()
+
 
         user_data.append({
             "user": user,
@@ -161,7 +173,7 @@ def users_list(request):
 
 @login_required
 def unfollow_user(request, user_id):
-    user = User.objects.get(id=user_id)
+    user = get_object_or_404(User, id=user_id)
 
     Follow.objects.filter(
         follower=request.user,
@@ -192,7 +204,8 @@ def create_post(request):
 
 @login_required
 def like_post(request, post_id):
-    post = Post.objects.get(id=post_id)
+    post = get_object_or_404(Post, id=post_id)
+    next_url = request.GET.get("next")
     like = Like.objects.filter(
         user=request.user,
         post=post
@@ -204,18 +217,25 @@ def like_post(request, post_id):
             user=request.user,
             post=post
         )
+        if request.user != post.author:
+            Notification.objects.create(
+                sender=request.user,
+                recipient=post.author,
+                notification_type="like",
+                post=post,
+            )
+    if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()}
+    ):
+        return redirect(next_url)
 
-        Notification.objects.create(
-            sender=request.user,
-            recipient=post.author,
-            notification_type="like",
-            post=post,
-        )
-    return redirect("user_profile", user_id=post.author.id)
+    return redirect("home")
+
 
 @login_required
 def comment_post(request, post_id):
-    post = Post.objects.get(id=post_id)
+    post = get_object_or_404(Post, id=post_id)
     if request.method == "POST":
         form = CommentForm(request.POST)
         if form.is_valid():
@@ -223,14 +243,15 @@ def comment_post(request, post_id):
             comment.post = post
             comment.user = request.user
             comment.save()
-            Notification.objects.create(
-                sender=request.user,
-                recipient=post.author,
-                notification_type="comment",
-                post=post,
-                comment=comment
+            if request.user != post.author:
+                Notification.objects.create(
+                    sender=request.user,
+                    recipient=post.author,
+                    notification_type="comment",
+                    post=post,
+                    comment=comment
 
-            )
+                )
     return redirect("post_detail", post_id=post_id)
 
 
@@ -274,14 +295,15 @@ def notifications(request):
 
 @login_required
 def mark_notification_read(request, notification_id):
-    notification = Notification.objects.get(id=notification_id, recipient=request.user)
+    notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+
     notification.is_read = True
     notification.save()
     return redirect("notifications")
 
 @login_required
 def user_profile(request, user_id):
-    user = User.objects.get(id=user_id)
+    user = get_object_or_404(User, id=user_id)
 
     posts = user.posts.all()
     for post in posts:
@@ -308,16 +330,7 @@ def user_profile(request, user_id):
         }
     )
 
-@login_required
-def unfollow_user(request, user_id):
-    user = User.objects.get(id=user_id)
-    follow = Follow.objects.filter(
-        follower=request.user,
-        following=user
-    ).first()
-    if follow:
-        follow.delete()
-    return redirect("user_profile", user_id=user_id)
+
 
 
 def search_users(request):
@@ -340,7 +353,7 @@ def search_users(request):
     )
 
 def post_detail(request, post_id):
-    post = Post.objects.get(id=post_id)
+    post = get_object_or_404(Post, id=post_id)
     is_liked = post.likes.filter(
         user=request.user
     ).exists()
@@ -351,7 +364,5 @@ def post_detail(request, post_id):
         "accounts/post_detail.html",
         {"post": post, "is_liked": is_liked, "comment_form": comment_form}
     )
-
-
 
 

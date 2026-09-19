@@ -108,7 +108,7 @@
     </p>
 
     <!-- Like / Unlike -->
-    <a href="{% url 'like' item.post.id %}">
+    <a href="{% url 'like' item.post.id %}?next={{ request.path }}">
         {% if item.is_liked %}
             💔 Unlike
         {% else %}
