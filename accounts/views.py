@@ -1,7 +1,7 @@
 from django.contrib.auth import login, logout
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import User, Follow, Post, Like, Notification
-from .forms import RegistrationForm, LoginForm
+
 # from django.http import HttpResponse
 # Create your views here.
 from django.contrib.auth.password_validation import validate_password
@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import RegistrationForm, LoginForm, ProfileForm, PostForm, CommentForm
 from django.db.models import Q, Count, Exists, OuterRef
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.shortcuts import get_object_or_404
+
 def register(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
@@ -151,24 +151,24 @@ def users_list(request):
         follower=request.user,
         following=OuterRef("pk")
     )
-    users = User.objects.exclude(id=request.user.id).annotate(
+    users = User.objects.exclude(
+        id=request.user.id
+    ).annotate(
         is_following=Exists(followed_by_user)
     )
 
     user_data = []
 
     for user in users:
-
-
         user_data.append({
             "user": user,
-            "is_following": is_following
+            "is_following": user.is_following,
         })
 
     return render(
         request,
         "accounts/users.html",
-        {"users": user_data}
+        {"users": user_data,}
     )
 
 @login_required
@@ -304,13 +304,13 @@ def mark_notification_read(request, notification_id):
 @login_required
 def user_profile(request, user_id):
     user = get_object_or_404(User, id=user_id)
-
-    posts = user.posts.all()
-    for post in posts:
-        post.is_liked = post.likes.filter(
-            user=request.user
-
-        ).exists()
+    liked_by_user = Like.objects.filter(
+        user=request.user,
+        post=OuterRef("pk")
+    )
+    posts = user.posts.all().annotate(
+        is_liked= Exists(liked_by_user),
+    )
 
     followers_count = user.followers.count()
     following_count = user.following.count()
