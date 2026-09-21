@@ -10,13 +10,21 @@
 {% if user != request.user %}
 
     {% if is_following %}
-        <a href="{% url 'unfollow' user.id %}">
-            Unfollow
-        </a>
+        <form method="POST" action="{% url 'unfollow' user.id %}">
+            {% csrf_token %}
+
+            <button type="submit">
+                Unfollow
+            </button>
+        </form>
     {% else %}
-        <a href="{% url 'follow' user.id %}">
-            Follow
-        </a>
+        <form method="POST" action="{% url 'follow' user.id %}">
+            {% csrf_token %}
+
+            <button type="submit">
+                Follow
+            </button>
+        </form>
     {% endif %}
 
 {% endif %}

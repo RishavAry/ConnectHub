@@ -108,13 +108,23 @@
     </p>
 
     <!-- Like / Unlike -->
-    <a href="{% url 'like' item.post.id %}?next={{ request.path }}">
+    <form method="POST" action="{% url 'like' item.post.id %}">
+    {% csrf_token %}
+
+    <input
+        type="hidden"
+        name="next"
+        value="{{ request.path }}"
+    >
+
+    <button type="submit">
         {% if item.is_liked %}
             💔 Unlike
         {% else %}
             ❤️ Like
         {% endif %}
-    </a>
+    </button>
+    </form>
 
     <!-- Comments -->
     <h4>Comments</h4>

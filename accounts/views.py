@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import RegistrationForm, LoginForm, ProfileForm, PostForm, CommentForm
 from django.db.models import Q, Count, Exists, OuterRef
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 
 def register(request):
     if request.method == "POST":
@@ -122,10 +123,11 @@ def profile(request):
     }
 
     return render(request, "accounts/profile.html", context)
-
+@require_POST
 @login_required
 def follow_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
+
 
     if request.user == user:
         return redirect("users")
@@ -170,7 +172,7 @@ def users_list(request):
         "accounts/users.html",
         {"users": user_data,}
     )
-
+@require_POST
 @login_required
 def unfollow_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
@@ -201,34 +203,35 @@ def create_post(request):
         "accounts/create_post.html",
         {"form": form}
     )
-
+@require_POST
 @login_required
 def like_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    next_url = request.GET.get("next")
-    like = Like.objects.filter(
-        user=request.user,
-        post=post
-    ).first()
-    if like:
-        like.delete()
-    else:
-        Like.objects.create(
+    next_url = request.POST.get("next")
+    if request.method == "POST":
+        like = Like.objects.filter(
             user=request.user,
             post=post
-        )
-        if request.user != post.author:
-            Notification.objects.create(
-                sender=request.user,
-                recipient=post.author,
-                notification_type="like",
-                post=post,
+        ).first()
+        if like:
+            like.delete()
+        else:
+            Like.objects.create(
+                user=request.user,
+                post=post
             )
-    if next_url and url_has_allowed_host_and_scheme(
-            next_url,
-            allowed_hosts={request.get_host()}
-    ):
-        return redirect(next_url)
+            if request.user != post.author:
+                Notification.objects.create(
+                    sender=request.user,
+                    recipient=post.author,
+                    notification_type="like",
+                    post=post,
+                )
+        if next_url and url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts={request.get_host()}
+        ):
+            return redirect(next_url)
 
     return redirect("home")
 
