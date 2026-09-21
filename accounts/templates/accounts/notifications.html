@@ -3,7 +3,10 @@
 
 {% for notification in notifications %}
 
-    <a href="{% url 'mark_notification_read' notification.id %}">
+    <form method="POST" action="{% url 'mark_notification_read' notification.id %}">
+    {% csrf_token %}
+
+    <button type="submit">
 
         {% if not notification.is_read %}
             🔵
@@ -22,7 +25,9 @@
             commented on your post.
         {% endif %}
 
-    </a>
+    </button>
+
+    </form>
 
 {% empty %}
     <p>No notifications yet.</p>

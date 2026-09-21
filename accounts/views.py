@@ -99,7 +99,7 @@ def home(request):
          }
     )
 
-
+@require_POST
 def logout_view(request):
     logout(request)
     return redirect("login")
@@ -295,8 +295,8 @@ def notifications(request):
         "accounts/notifications.html",
         {"notifications": notifications}
     )
-
 @login_required
+@require_POST
 def mark_notification_read(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
 
@@ -335,7 +335,7 @@ def user_profile(request, user_id):
 
 
 
-
+@login_required
 def search_users(request):
     query = request.GET.get("q")
 
@@ -354,7 +354,7 @@ def search_users(request):
         "accounts/search.html",
         {"users": users}
     )
-
+@login_required
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     is_liked = post.likes.filter(
