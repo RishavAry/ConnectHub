@@ -12,6 +12,7 @@ from .forms import RegistrationForm, LoginForm, ProfileForm, PostForm, CommentFo
 from django.db.models import Q, Count, Exists, OuterRef
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator
 
 def register(request):
     if request.method == "POST":
@@ -73,16 +74,17 @@ def home(request):
         user=request.user,
         post= OuterRef("pk")
     )
-    posts = (Post.objects.filter(
+    posts = Post.objects.filter(
         Q(author=request.user) |
         Q(author_id__in=following_users)
     ).select_related("author").annotate(likes_count=Count("likes"),
-                                            is_liked=Exists(liked_by_user)).prefetch_related("comments")
-             .order_by("-created_at")
-             )
+                                            is_liked=Exists(liked_by_user)).prefetch_related("comments").order_by("-created_at")
 
+    paginator = Paginator(posts, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     post_data = []
-    for post in posts:
+    for post in page_obj:
         likes_count = post.likes_count
 
         post_data.append({
@@ -96,6 +98,7 @@ def home(request):
         request,
         "accounts/home.html",
         {"posts": post_data,
+         "page_obj": page_obj,
          }
     )
 

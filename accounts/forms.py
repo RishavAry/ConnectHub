@@ -65,6 +65,11 @@ class ProfileForm(forms.ModelForm):
 
 
 class PostForm(forms.ModelForm):
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image and image.size > 5 * 1024 * 1024:
+            raise ValidationError("Image size is too big")
+        return image
     class Meta:
         model = Post
         fields = ['content', 'image']

@@ -34,6 +34,9 @@
 {% for post in posts %}
     <div>
         <h3>{{ post.content }}</h3>
+    {% if post.image %}
+        <img src="{{ post.image.url }}" alt="Post image">
+    {% endif %}
         <small>{{ post.created_at }}</small>
     <br>
 
