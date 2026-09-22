@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-
+from .api_views import hello_api
 urlpatterns = [
     path('register/',views.register, name='register'),
 path("login/", views.login_view, name="login"),
@@ -41,5 +41,11 @@ path("login/", views.login_view, name="login"),
         "post/<int:post_id>/",
         views.post_detail,
         name="post_detail"
+    ),
+    path(
+        "hello_api/",
+        hello_api,
+        name="hello_api"
     )
+
 ]
