@@ -5,7 +5,8 @@ from .serializers import PostSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
-
+from rest_framework.views import APIView
+from .permissions import IsPostAuthor
 @api_view(['GET'])
 def hello_api(request):
     return Response({"message": "connecthub"})
@@ -52,3 +53,53 @@ def post_detail_api(request, post_id):
         serializer = PostSerializer(post)
         return Response(serializer.data)
     # return Response(serializer.data)
+
+
+class PostDetailApi(APIView):
+    permission_classes = [IsAuthenticated, IsPostAuthor]
+    def get_object(self, post_id):
+        return get_object_or_404(Post, id=post_id)
+    def get(self, request, post_id):
+        post = self.get_object(post_id)
+        self.check_object_permissions(request, post)
+        serializer = PostSerializer(post)
+        return Response(serializer.data)
+
+    def put(self, request, post_id):
+        post = self.get_object(post_id)
+
+        self.check_object_permissions(request, post)
+
+        serializer = PostSerializer(post, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=400)
+
+    def patch(self, request, post_id):
+        post = self.get_object(post_id)
+
+        self.check_object_permissions(request, post)
+
+        serializer = PostSerializer(
+            post,
+            data=request.data,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, post_id):
+        post = self.get_object(post_id)
+
+        self.check_object_permissions(request, post)
+
+        post.delete()
+
+        return Response({"message": "Post deleted successfully"})
