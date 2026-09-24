@@ -1,5 +1,5 @@
 from django.urls import path
-from .api_views import hello_api, post_list_view, PostDetailApi
+from .api_views import hello_api, post_list_view, PostDetailApi, like_post_api
 
 urlpatterns = [
     path("hello/", hello_api, name="hello_api"),
@@ -8,4 +8,6 @@ urlpatterns = [
         "posts/<int:post_id>/",
         PostDetailApi.as_view(),
         name="post_detail_api"
-    ),]
+    ),
+    path("posts/<int:post_id>/like/", like_post_api, name="like_post_api"),
+    ]

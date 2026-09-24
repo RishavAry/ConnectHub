@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .models import Post
+from .models import Post, Like, Notification
 from .serializers import PostSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -103,3 +103,36 @@ class PostDetailApi(APIView):
         post.delete()
 
         return Response({"message": "Post deleted successfully"})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def like_post_api(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+
+    like = Like.objects.filter(
+        user=request.user,
+        post=post
+    ).first()
+    if like:
+        like.delete()
+        liked = False
+    else:
+        Like.objects.create(
+            user=request.user,
+            post=post
+        )
+        liked = True
+
+        if request.user != post.author:
+            Notification.objects.create(
+                sender=request.user,
+                recipient=post.author,
+                notification_type="like",
+                post=post,
+            )
+    return Response({
+                "liked":liked,
+                "likes_count": post.likes.count(),
+    })
+            
