@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { API_BASE, csrfToken } from "./api";
+import { API_BASE, apiRequest } from "./api";
 
 function Notifications({ onUnreadCount }) {
   const [notifications, setNotifications] = useState([]);
@@ -9,7 +9,7 @@ function Notifications({ onUnreadCount }) {
   const loadNotifications = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const response = await fetch(`${API_BASE}/api/notifications/`, { credentials: "include" });
+      const response = await apiRequest(`${API_BASE}/api/notifications/`);
       const data = await response.json(); if (!response.ok) throw new Error(data.detail || `Could not load notifications (${response.status}).`);
       setNotifications(data); onUnreadCount(data.filter((item) => !item.is_read).length);
     } catch (requestError) { setError(requestError.message); }
@@ -19,7 +19,7 @@ function Notifications({ onUnreadCount }) {
   const markRead = async (item) => {
     setBusyId(item.id); setError("");
     try {
-      const response = await fetch(`${API_BASE}/api/notifications/${item.id}/read/`, { method: "POST", credentials: "include", headers: { "X-CSRFToken": csrfToken() } });
+      const response = await apiRequest(`${API_BASE}/api/notifications/${item.id}/read/`, { method: "POST" });
       const data = await response.json(); if (!response.ok) throw new Error(data.detail || "Could not mark notification as read.");
       setNotifications((current) => current.map((notification) => notification.id === item.id ? { ...notification, is_read: data.is_read } : notification));
       onUnreadCount((count) => Math.max(0, count - 1));

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_BASE, csrfToken } from "./api";
+import { API_BASE, apiRequest } from "./api";
 import "./PostCard.css";
 
 function PostCard({ post, onError }) {
@@ -12,7 +12,7 @@ function PostCard({ post, onError }) {
   const [localError, setLocalError] = useState("");
   useEffect(() => {
     let active = true;
-    fetch(`${API_BASE}/api/posts/${post.id}/comments/`, { credentials: "include" }).then(async (response) => {
+    apiRequest(`${API_BASE}/api/posts/${post.id}/comments/`).then(async (response) => {
       if (!response.ok) throw new Error(`Could not load comments (${response.status}).`);
       return response.json();
     }).then((data) => { if (active) setComments(data); }).catch((error) => { if (active) setLocalError(error.message); }).finally(() => { if (active) setCommentsLoading(false); });
@@ -21,7 +21,7 @@ function PostCard({ post, onError }) {
   const handleLike = async () => {
     setBusy(true); setLocalError("");
     try {
-      const response = await fetch(`${API_BASE}/api/posts/${post.id}/like/`, { method: "POST", credentials: "include", headers: { "X-CSRFToken": csrfToken() } });
+      const response = await apiRequest(`${API_BASE}/api/posts/${post.id}/like/`, { method: "POST" });
       const data = await response.json(); if (!response.ok) throw new Error(data.detail || `Like failed (${response.status}).`);
       setLiked(data.liked); setLikeCount(data.likes_count);
     } catch (error) { setLocalError(error.message); onError?.(error.message); }
@@ -31,7 +31,7 @@ function PostCard({ post, onError }) {
     event.preventDefault(); if (!comment.trim()) return;
     setBusy(true); setLocalError("");
     try {
-      const response = await fetch(`${API_BASE}/api/posts/${post.id}/comments/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() }, body: JSON.stringify({ content: comment.trim() }) });
+      const response = await apiRequest(`${API_BASE}/api/posts/${post.id}/comments/`, { method: "POST", body: JSON.stringify({ content: comment.trim() }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || data.detail || "Could not add comment.");
       setComments((current) => [...current, data]); setComment("");
     } catch (error) { setLocalError(error.message); onError?.(error.message); }

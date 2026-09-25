@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { API_BASE, csrfToken } from "./api";
+import { API_BASE, apiRequest } from "./api";
 
 function Login({ onLogin, onSwitchRegister, notice }) {
   const [username, setUsername] = useState(""); const [password, setPassword] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const handleSubmit = async (event) => {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const csrfResponse = await fetch(`${API_BASE}/api/csrf/`, { credentials: "include" });
-      if (!csrfResponse.ok) throw new Error("Could not initialize secure login. Please retry.");
-      const response = await fetch(`${API_BASE}/api/login/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() }, body: JSON.stringify({ username, password }) });
+      const response = await apiRequest(`${API_BASE}/api/login/`, { method: "POST", body: JSON.stringify({ username, password }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || data.detail || "Login failed.");
       await onLogin();
     } catch (requestError) { setError(requestError.message); }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { API_BASE, csrfToken } from "./api";
+import { API_BASE, apiRequest } from "./api";
 
 function CreatePost({ onPostCreated }) {
   const [content, setContent] = useState("");
@@ -12,7 +12,7 @@ function CreatePost({ onPostCreated }) {
     setBusy(true); setError("");
     try {
       const body = new FormData(); body.append("content", content.trim()); if (image) body.append("image", image);
-      const response = await fetch(`${API_BASE}/api/posts/`, { method: "POST", credentials: "include", headers: { "X-CSRFToken": csrfToken() }, body });
+      const response = await apiRequest(`${API_BASE}/api/posts/`, { method: "POST", body });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || data.detail || "Could not create your post.");
       onPostCreated(data); setContent(""); setImage(null); event.target.reset();

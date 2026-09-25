@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { API_BASE, csrfToken } from "./api";
+import { API_BASE, apiRequest } from "./api";
 
 function PeopleSearch({ onOpenProfile }) {
   const [query, setQuery] = useState("");
@@ -11,7 +11,7 @@ function PeopleSearch({ onOpenProfile }) {
   const search = async (event) => {
     event.preventDefault(); setLoading(true); setError(""); setSearched(true);
     try {
-      const response = await fetch(`${API_BASE}/api/users/search/?q=${encodeURIComponent(query.trim())}`, { credentials: "include" });
+      const response = await apiRequest(`${API_BASE}/api/users/search/?q=${encodeURIComponent(query.trim())}`);
       const data = await response.json(); if (!response.ok) throw new Error(data.detail || `Search failed (${response.status}).`);
       setUsers(data);
     } catch (requestError) { setError(requestError.message); }
@@ -20,7 +20,7 @@ function PeopleSearch({ onOpenProfile }) {
   const toggleFollow = async (person) => {
     setBusyId(person.id); setError("");
     try {
-      const response = await fetch(`${API_BASE}/api/users/${person.id}/follow/`, { method: person.is_following ? "DELETE" : "POST", credentials: "include", headers: { "X-CSRFToken": csrfToken() } });
+      const response = await apiRequest(`${API_BASE}/api/users/${person.id}/follow/`, { method: person.is_following ? "DELETE" : "POST" });
       const data = await response.json(); if (!response.ok) throw new Error(data.detail || "Could not update follow status.");
       setUsers((current) => current.map((item) => item.id === person.id ? { ...item, is_following: data.following } : item));
     } catch (requestError) { setError(requestError.message); }

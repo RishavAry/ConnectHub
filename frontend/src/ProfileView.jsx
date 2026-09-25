@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Feed from "./Feed";
-import { API_BASE, csrfToken } from "./api";
+import { API_BASE, apiRequest } from "./api";
 
 function ProfileView({ userId, currentUser, onError }) {
   const ownProfile = userId === currentUser.id;
@@ -15,7 +15,7 @@ function ProfileView({ userId, currentUser, onError }) {
     let active = true;
     Promise.resolve().then(() => {
       if (active) { setLoading(true); setError(""); }
-      return fetch(`${API_BASE}/api/users/${userId}/profile/`, { credentials: "include" });
+      return apiRequest(`${API_BASE}/api/users/${userId}/profile/`);
     }).then(async (response) => {
       const data = await response.json(); if (!response.ok) throw new Error(data.detail || `Could not load profile (${response.status}).`); return data;
     }).then((data) => { if (active) { setProfile(data); setDraft({ bio: data.bio || "", location: data.location || "" }); } }).catch((requestError) => { if (active) setError(requestError.message); }).finally(() => { if (active) setLoading(false); });
@@ -24,7 +24,7 @@ function ProfileView({ userId, currentUser, onError }) {
   const saveProfile = async (event) => {
     event.preventDefault(); setSaving(true); setError(""); setNotice("");
     try {
-      const response = await fetch(`${API_BASE}/api/profile/`, { method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() }, body: JSON.stringify(draft) });
+      const response = await apiRequest(`${API_BASE}/api/profile/`, { method: "PATCH", body: JSON.stringify(draft) });
       const data = await response.json(); if (!response.ok) throw new Error(Object.values(data.errors || {}).flat().join(" ") || data.detail || "Could not save profile.");
       setProfile((current) => ({ ...current, ...data })); setNotice("Profile saved.");
     } catch (requestError) { setError(requestError.message); }
@@ -33,7 +33,7 @@ function ProfileView({ userId, currentUser, onError }) {
   const follow = async () => {
     setFollowingBusy(true); setError("");
     try {
-      const response = await fetch(`${API_BASE}/api/users/${userId}/follow/`, { method: profile.is_following ? "DELETE" : "POST", credentials: "include", headers: { "X-CSRFToken": csrfToken() } });
+      const response = await apiRequest(`${API_BASE}/api/users/${userId}/follow/`, { method: profile.is_following ? "DELETE" : "POST" });
       const data = await response.json(); if (!response.ok) throw new Error(data.detail || "Could not update follow status.");
       setProfile((current) => ({ ...current, is_following: data.following, followers_count: data.followers_count }));
     } catch (requestError) { setError(requestError.message); }

@@ -4,7 +4,7 @@ import Feed from "./Feed";
 import CreatePost from "./CreatePost";
 import Login from "./Login";
 import Register from "./Register";
-import { API_BASE } from "./api";
+import { API_BASE, apiRequest, initializeCsrf } from "./api";
 import ProfileView from "./ProfileView";
 import PeopleSearch from "./PeopleSearch";
 import Notifications from "./Notifications";
@@ -25,7 +25,7 @@ function App() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${API_BASE}/api/posts/`, { credentials: "include" });
+      const response = await apiRequest(`${API_BASE}/api/posts/`);
       if (!response.ok) throw new Error(response.status === 403 ? "Please log in to view the feed." : `Could not load posts (${response.status}).`);
       setPosts(await response.json());
     } catch (requestError) {
@@ -37,7 +37,7 @@ function App() {
 
   const loadUser = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/me/`, { credentials: "include" });
+      const response = await apiRequest(`${API_BASE}/api/me/`);
       if (!response.ok) throw new Error("Not authenticated");
       setUser(await response.json());
     } catch {
@@ -48,8 +48,7 @@ function App() {
   useEffect(() => {
     Promise.resolve().then(async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/csrf/`, { credentials: "include" });
-        if (!response.ok) throw new Error(`Could not initialize security cookie (${response.status}).`);
+        await initializeCsrf();
         await loadUser();
       } catch (requestError) {
         setError(requestError.message);
@@ -65,22 +64,8 @@ function App() {
     setError("");
 
     try {
-      const csrfResponse = await fetch(`${API_BASE}/api/csrf/`, {
-        credentials: "include",
-      });
-
-      if (!csrfResponse.ok) {
-        throw new Error("Could not initialize secure logout.");
-      }
-
-      const csrfData = await csrfResponse.json();
-
-      const response = await fetch(`${API_BASE}/api/logout/`, {
+      const response = await apiRequest(`${API_BASE}/api/logout/`, {
         method: "POST",
-        credentials: "include",
-        headers: {
-          "X-CSRFToken": csrfData.csrfToken,
-        },
       });
 
       if (!response.ok) {

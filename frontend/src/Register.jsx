@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { API_BASE } from "./api";
+import { API_BASE, apiRequest } from "./api";
 
 function Register({ onSwitchLogin, onRegistered }) {
   const [values, setValues] = useState({ username: "", email: "", password: "" });
@@ -9,24 +9,8 @@ function Register({ onSwitchLogin, onRegistered }) {
   const handleSubmit = async (event) => {
     event.preventDefault(); setErrors({}); setBusy(true);
     try {
-      const csrfResponse = await fetch(`${API_BASE}/api/csrf/`, {
-        credentials: "include",
-      });
-
-      if (!csrfResponse.ok) {
-        throw new Error(
-          "Could not initialize secure registration. Please retry.",
-        );
-      }
-
-      const csrfData = await csrfResponse.json();
-      const response = await fetch(`${API_BASE}/api/register/`, {
+      const response = await apiRequest(`${API_BASE}/api/register/`, {
         method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfData.csrfToken,
-        },
         body: JSON.stringify(values),
       });
       const data = await response.json();
