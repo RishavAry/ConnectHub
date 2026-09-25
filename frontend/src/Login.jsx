@@ -1,62 +1,25 @@
 import { useState } from "react";
+import { API_BASE, csrfToken } from "./api";
 
-function getCSRFToken() {
-  const cookie = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("csrftoken="));
-
-  return cookie ? cookie.split("=")[1] : "";
-}
-function Login({ onLogin }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
-    fetch("http://localhost:8000/api/login/", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify({
-        username: username,
-        password: password,
-      }),
-    })
-      .then((response) => response.json())
-      
-      .then((data) => {
-        console.log("Login response:", data);
-        onLogin(data);
-      });
+function Login({ onLogin, onSwitchRegister, notice }) {
+  const [username, setUsername] = useState(""); const [password, setPassword] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  const handleSubmit = async (event) => {
+    event.preventDefault(); setBusy(true); setError("");
+    try {
+      const csrfResponse = await fetch(`${API_BASE}/api/csrf/`, { credentials: "include" });
+      if (!csrfResponse.ok) throw new Error("Could not initialize secure login. Please retry.");
+      const response = await fetch(`${API_BASE}/api/login/`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() }, body: JSON.stringify({ username, password }) });
+      const data = await response.json(); if (!response.ok) throw new Error(data.error || data.detail || "Login failed.");
+      await onLogin();
+    } catch (requestError) { setError(requestError.message); }
+    finally { setBusy(false); }
   };
-
-  return (
-    <div>
-      <h2>Login</h2>
-
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-
-        <button type="submit">Login</button>
-      </form>
-    </div>
-  );
+  return <main className="login-shell"><form className="login-card card" onSubmit={handleSubmit}><p className="eyebrow">WELCOME TO</p><h1>ConnectHub</h1><p className="muted">Sign in to catch up with your community.</p>
+    {notice && <p className="success-notice" role="status">{notice}</p>}
+    <label>Username<input autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} /></label>
+    <label>Password<input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+    {error && <p className="form-error" role="alert">{error}</p>}<button className="primary-button" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
+    <p className="auth-switch">New to ConnectHub? <button type="button" onClick={onSwitchRegister}>Create an account</button></p>
+  </form></main>;
 }
-
 export default Login;

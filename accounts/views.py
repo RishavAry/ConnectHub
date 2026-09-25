@@ -14,6 +14,41 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 
+
+def follow_user_record(follower, following):
+    follow, created = Follow.objects.get_or_create(
+        follower=follower,
+        following=following,
+    )
+    if created:
+        Notification.objects.create(
+            sender=follower,
+            recipient=following,
+            notification_type="follow",
+        )
+    return follow, created
+
+
+def unfollow_user_record(follower, following):
+    return Follow.objects.filter(follower=follower, following=following).delete()
+
+
+def search_user_queryset(query, current_user):
+    if not query:
+        return User.objects.none()
+    return User.objects.filter(
+        Q(username__icontains=query)
+        | Q(first_name__icontains=query)
+        | Q(last_name__icontains=query)
+        | Q(email__icontains=query)
+    ).exclude(id=current_user.id)
+
+
+def mark_notification_as_read(notification):
+    notification.is_read = True
+    notification.save(update_fields=["is_read"])
+    return notification
+
 def register(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
@@ -135,17 +170,7 @@ def follow_user(request, user_id):
     if request.user == user:
         return redirect("users")
 
-    follow, created = Follow.objects.get_or_create(
-        follower=request.user,
-        following=user
-    )
-
-    if created:
-        Notification.objects.create(
-            sender=request.user,
-            recipient=user,
-            notification_type="follow",
-        )
+    follow_user_record(request.user, user)
 
     return redirect("user_profile", user_id=user_id)
 
@@ -180,10 +205,7 @@ def users_list(request):
 def unfollow_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
-    Follow.objects.filter(
-        follower=request.user,
-        following=user
-    ).delete()
+    unfollow_user_record(request.user, user)
 
     return redirect("user_profile", user_id=user_id)
 
@@ -303,8 +325,7 @@ def notifications(request):
 def mark_notification_read(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
 
-    notification.is_read = True
-    notification.save()
+    mark_notification_as_read(notification)
     return redirect("notifications")
 
 @login_required
@@ -342,15 +363,7 @@ def user_profile(request, user_id):
 def search_users(request):
     query = request.GET.get("q")
 
-    if query:
-        users = User.objects.filter(
-            Q(username__icontains=query)
-            | Q(first_name__icontains=query)
-            | Q(last_name__icontains=query)
-            | Q(email__icontains=query)
-        ).exclude(id=request.user.id)
-    else:
-        users = User.objects.none()
+    users = search_user_queryset(query, request.user)
 
     return render(
         request,
@@ -370,5 +383,4 @@ def post_detail(request, post_id):
         "accounts/post_detail.html",
         {"post": post, "is_liked": is_liked, "comment_form": comment_form}
     )
-
 
