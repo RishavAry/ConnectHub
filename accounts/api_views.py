@@ -7,6 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
 from .permissions import IsPostAuthor
+from django.contrib.auth import authenticate
+from django.contrib.auth import login, logout
 @api_view(['GET'])
 def hello_api(request):
     return Response({"message": "connecthub"})
@@ -179,3 +181,44 @@ def create_comment_api(request, post_id):
 
     serializer = CommentSerializer(comment)
     return Response(serializer.data)
+
+@api_view(["POST"])
+def login_api(request):
+    username = request.data.get("username")
+    password = request.data.get("password")
+
+    user = authenticate(
+        username=username,
+        password=password
+    )
+
+    if user is None:
+        return Response(
+            {"error": "Invalid username or password"},
+            status=400
+        )
+
+    login(request, user)
+
+    return Response({
+        "message": "Login successful",
+        "username": user.username,
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def current_user_api(request):
+    return Response({
+        "id": request.user.id,
+        "username": request.user.username,
+    })
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout_api(request):
+    logout(request)
+
+    return Response({
+        "message": "Logout successful"
+    })
