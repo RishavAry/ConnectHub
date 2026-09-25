@@ -1,66 +1,161 @@
+cat > README.md <<'EOF'
 # ConnectHub
 
-ConnectHub is a full-stack social networking application built with React and Django REST Framework. It lets people create profiles, connect with other users, share posts, and interact through a social feed.
+ConnectHub is a full-stack social networking application built with React, Django REST Framework, and PostgreSQL.
+
+The project provides user authentication, profiles, following, posts, image uploads, likes, comments, search, and notifications through a REST API-backed web application.
 
 ## Live Demo
 
-- Frontend: [ConnectHub](https://connect-hub-pink-two.vercel.app/)
-- Backend API: [ConnectHub API](https://connecthub-backend-3k3t.onrender.com/)
-- API health check: [GET /api/hello/](https://connecthub-backend-3k3t.onrender.com/api/hello/)
+- Frontend: https://connect-hub-pink-two.vercel.app/
+- Backend API: https://connecthub-backend-3k3t.onrender.com/
+- API Health Check: https://connecthub-backend-3k3t.onrender.com/api/hello/
 
 ## Tech Stack
 
-- **Frontend:** React, Vite, JavaScript
-- **Backend:** Python, Django, Django REST Framework
-- **Database:** PostgreSQL in production; SQLite for local development
-- **Deployment:** Vercel (frontend), Render (backend)
+### Frontend
+- React
+- Vite
+- JavaScript
+
+### Backend
+- Python
+- Django
+- Django REST Framework
+
+### Database
+- PostgreSQL
+
+### Deployment
+- Vercel
+- Render
+
 
 ## Features
 
-- User registration and login/logout
-- Session authentication with CSRF protection
-- User profiles and user search
+### Authentication
+- User registration
+- Login and logout
+- Session-based authentication
+- CSRF-protected state-changing requests
+
+### User Profiles
+- User profiles
+- Profile information
+- Profile navigation
+- User search
+
+### Social Features
 - Follow and unfollow users
+- View other users
 - Social feed
-- Create posts with image uploads
-- Like posts and add comments
-- Notifications
-- REST API with centralized frontend API request handling
+
+### Posts
+- Create posts
+- Upload images with posts
+- View posts in the feed
+- Like and unlike posts
+- Add comments
+
+### Notifications
+- Notifications for social interactions and activity
+
+### API
+- REST API built with Django REST Framework
+- Centralized frontend API request handling
+- JSON-based API communication
+
 
 ## Architecture
 
-```text
-React + Vite frontend on Vercel
-        ↓ HTTPS / REST API
-Django REST Framework backend on Render
-        ↓ Django ORM
-PostgreSQL production database
-```
+ConnectHub follows a client-server architecture:
 
-The frontend sends API requests to the backend over HTTPS. Django applies authentication and permission checks, accesses application data through Django ORM, and returns responses to the frontend. PostgreSQL stores production application data.
+![ConnectHub Architecture](docs/architecture.png)
+
+### Request Flow
+
+1. The React frontend sends HTTPS requests to the Django REST API.
+2. Django REST Framework handles authentication, validation, and application logic.
+3. Django ORM communicates with PostgreSQL.
+4. The backend returns API responses to the React frontend.
+
 
 ## Security & Authentication
 
-- Authentication uses Django sessions.
-- The frontend obtains and sends CSRF tokens for protected requests using the `X-CSRFToken` header.
-- The centralized frontend API helper includes `credentials: "include"` so browser requests carry session cookies.
-- Cross-origin access is configured with CORS settings, and the frontend origin is included in the backend's CSRF trusted origins.
-- Secrets and deployment-specific settings are provided through environment variables and should not be committed.
-- Production runs with `DEBUG=False` and secure cross-site cookie settings for the separately hosted frontend and backend.
+ConnectHub uses session-based authentication with CSRF protection for state-changing requests.
 
+### Authentication
+- User registration and login
+- Session-based authentication
+- Protected endpoints for authenticated users
+- Logout and session handling
+
+### CSRF Protection
+- CSRF tokens are fetched from the backend
+- Frontend requests send the `X-CSRFToken` header
+- Credentials are included with API requests
+- Multipart `FormData` requests are handled without manually overriding the browser's `Content-Type`
+- API requests are centralized through the frontend API helper
+
+### Cross-Origin Configuration
+Because the frontend and backend are deployed separately, production CORS and CSRF trusted origins are configured for the deployed frontend.
+
+### Environment Configuration
+Sensitive configuration is stored through environment variables rather than committed to the repository.
+
+Production configuration includes:
+- Django secret key
+- Database connection
+- Allowed hosts
+- CORS origins
+- CSRF trusted origins
+
+### Production Security
+- `DEBUG=False` in production
+- Secrets are excluded from Git
+- Production cookies use secure cross-site settings
+EOF
 ## Backend & API
 
-The backend uses Django and Django REST Framework. Django models represent users, profiles, follows, posts, likes, comments, and notifications. The API provides:
+The backend is built with Django and Django REST Framework and provides the application API used by the React frontend.
 
-- Authentication and session handling
-- Profile and user data
+### Core Backend Components
+
+The application includes backend models for:
+
+- Users
+- Profiles
+- Follows
+- Posts
+- Likes
+- Comments
+- Notifications
+
+### API Responsibilities
+
+The backend handles:
+
+- User authentication and session management
+- User and profile data
 - Follow relationships
-- Posts and image uploads
+- Post creation and retrieval
+- Image uploads
 - Likes and comments
-- Notifications and user search
+- Notifications
+- Search and user discovery
 - Request validation and API responses
 
-Django ORM handles database access. SQLite is used for local development, while PostgreSQL is used in production. The health endpoint is `GET /api/hello/`.
+### Database
+
+Django ORM is used to communicate with the PostgreSQL production database.
+
+The database stores the application's users, profiles, social relationships, posts, interactions, and notifications.
+
+### API Health Check
+
+A health endpoint is available at:
+
+`GET /api/hello/`
 
 Example response:
 
@@ -68,102 +163,73 @@ Example response:
 {
   "message": "connecthub"
 }
-```
+
 
 ## Local Development
 
 ### Prerequisites
 
+Make sure the following are installed:
+
 - Python 3.10+
-- Node.js and npm
+- Node.js
+- npm
 - Git
 
-Clone the repository:
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/RishavAry/ConnectHub.git
-cd ConnectHub
-```
+git clone https://github.com/RishavAry/ConnectHub
+cd connecthub
 
-### Backend
-
-From the repository root, create and activate a virtual environment, install dependencies, apply migrations, and start Django:
-
-```bash
-python3 -m venv env
-source env/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-```
-
-Configure the required local environment variables before running the backend. Keep secrets out of the repository and do not commit them.
-
-### Frontend
-
-In another terminal, set the API base URL and start the Vite development server:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Set the frontend API base URL to `http://127.0.0.1:8000` with the `VITE_API_BASE_URL` environment variable. SQLite is used locally; PostgreSQL is used in production.
 
 ## Demo
 
-- [Live frontend](https://connect-hub-pink-two.vercel.app/)
-- [Backend API](https://connecthub-backend-3k3t.onrender.com/)
-- [API health endpoint](https://connecthub-backend-3k3t.onrender.com/api/hello/)
+### Live Application
+
+[Open ConnectHub](https://connect-hub-pink-two.vercel.app/)
+
+### Backend API
+
+[ConnectHub API](https://connecthub-backend-3k3t.onrender.com/)
+
+### API Health Check
+
+[Health Check](https://connecthub-backend-3k3t.onrender.com/api/hello/)
 
 ## Screenshots
 
+Screenshots showcasing the main parts of the application:
+
 ### Login
 
-![ConnectHub login screen](docs/screenshots/login.png)
+![ConnectHub Login](docs/screenshots/login.png)
 
-### Feed
+### Home Feed
 
-![ConnectHub social feed](docs/screenshots/feed.png)
+![ConnectHub Feed](docs/screenshots/feed.png)
 
-### Create a post
+### Create Post
 
-![ConnectHub create post screen](docs/screenshots/create-post.png)
+![Create Post](docs/screenshots/create-post.png)
 
 ### Profile
 
-![ConnectHub profile screen](docs/screenshots/profile.png)
+![ConnectHub Profile](docs/screenshots/profile.png)
 
 ### Notifications
 
-![ConnectHub notifications screen](docs/screenshots/Notification.png)
+![ConnectHub Notifications](docs/screenshots/notifications.png)
 
 ## Project Structure
 
 ```text
-ConnectHub/
-├── accounts/
-├── config/
-├── frontend/
+connecthub/
+├── accounts/            # Django application: models, views, serializers, auth
+├── config/              # Django project configuration and settings
+├── frontend/            # React + Vite frontend
 ├── docs/
-│   └── screenshots/
+│   └── screenshots/     # Project screenshots
 ├── manage.py
 ├── requirements.txt
 └── README.md
-```
-
-## Project Status
-
-ConnectHub is deployed and demonstrates its core authentication, social networking, posts, interactions, search, and notification functionality. Image uploads are implemented. Persistent production media storage is unfinished.
-
-## Future Improvements
-
-- Finish persistent production media storage
-- Add automated testing
-- Improve API documentation
-- Add background task processing
-- Add caching and performance improvements
-- Add Docker/containerization
-- Add CI/CD
-- Add moderation and platform-management features
