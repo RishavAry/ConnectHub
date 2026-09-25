@@ -4,7 +4,7 @@ import Feed from "./Feed";
 import CreatePost from "./CreatePost";
 import Login from "./Login";
 import Register from "./Register";
-import { API_BASE, csrfToken } from "./api";
+import { API_BASE } from "./api";
 import ProfileView from "./ProfileView";
 import PeopleSearch from "./PeopleSearch";
 import Notifications from "./Notifications";
@@ -63,13 +63,37 @@ function App() {
   const handleLogout = async () => {
     setLogoutLoading(true);
     setError("");
+
     try {
-      const response = await fetch(`${API_BASE}/api/logout/`, { method: "POST", credentials: "include", headers: { "X-CSRFToken": csrfToken() } });
-      if (!response.ok) throw new Error(`Logout failed (${response.status}).`);
+      const csrfResponse = await fetch(`${API_BASE}/api/csrf/`, {
+        credentials: "include",
+      });
+
+      if (!csrfResponse.ok) {
+        throw new Error("Could not initialize secure logout.");
+      }
+
+      const csrfData = await csrfResponse.json();
+
+      const response = await fetch(`${API_BASE}/api/logout/`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "X-CSRFToken": csrfData.csrfToken,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Logout failed (${response.status}).`);
+      }
+
       setUser(null);
       setPosts([]);
-    } catch (requestError) { setError(requestError.message); }
-    finally { setLogoutLoading(false); }
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLogoutLoading(false);
+    }
   };
 
   if (!user) return authView === "register"
