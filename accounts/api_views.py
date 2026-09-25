@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .models import Post, Like, Notification
-from .serializers import PostSerializer
+from .models import Post, Like, Notification,Comment
+from .serializers import PostSerializer, CommentSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
@@ -135,4 +135,47 @@ def like_post_api(request, post_id):
                 "liked":liked,
                 "likes_count": post.likes.count(),
     })
-            
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def create_comment_api(request, post_id):
+
+    post = get_object_or_404(Post, id=post_id)
+
+    if request.method == "GET":
+        comments = Comment.objects.filter(
+            post=post
+        ).order_by("created_at")
+
+        serializer = CommentSerializer(
+            comments,
+            many=True
+        )
+
+        return Response(serializer.data)
+
+    content = request.data.get("content")
+
+    if not content:
+        return Response(
+            {"error": "Comment cannot be empty"},
+            status=400
+        )
+
+    comment = Comment.objects.create(
+        post=post,
+        user=request.user,
+        content=content
+    )
+
+    if request.user != post.author:
+        Notification.objects.create(
+            sender=request.user,
+            recipient=post.author,
+            notification_type="comment",
+            post=post,
+            comment=comment,
+        )
+
+    serializer = CommentSerializer(comment)
+    return Response(serializer.data)
